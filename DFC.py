@@ -25,7 +25,7 @@ def decode_msg(bits, encoding='UTF-8'):
 # входной параметр: полное сообщение
 # выходной параметр: нарезанное сообщение
 def slicer(message):
-
+    message = str(message)
     sliced_message = []
     k = 0
     while (k < len(message) / 128):
@@ -113,7 +113,65 @@ def struct_algo_dfc(source_block_str):
     # 8 раундов
     k = 0
     while (k != 8):
-        round_calc = dfc_round_func(KS, right_subblock)
+        if k == 0:
+            round_calc = dfc_round_func(K1, right_subblock)
+        elif k == 1:
+            round_calc = dfc_round_func(K2, right_subblock)
+        elif k == 2:
+            round_calc = dfc_round_func(K3, right_subblock)
+        elif k == 3:
+            round_calc = dfc_round_func(K4, right_subblock)
+        elif k == 4:
+            round_calc = dfc_round_func(K5, right_subblock)
+        elif k == 5:
+            round_calc = dfc_round_func(K6, right_subblock)
+        elif k == 6:
+            round_calc = dfc_round_func(K7, right_subblock)
+        elif k == 7:
+            round_calc = dfc_round_func(K8, right_subblock)
+        else:
+            print('bl')
+        helper = right_subblock
+        right_subblock = round_calc ^ left_subblock
+        left_subblock = helper
+        k += 1
+
+    # формируем зашифрованный блок
+    left_subblock_str = bin(left_subblock)[2:].zfill(64)
+    rigth_subblock_str = bin(right_subblock)[2:].zfill(64)
+    ciphered_block_str = rigth_subblock_str + left_subblock_str
+
+    return ciphered_block_str.zfill(128)
+
+def struct_algo_dfc_dec(source_block_str):
+
+    # разрезаем блок на две части
+    left_subblock_str = source_block_str[0:64]
+    right_subblock_str = source_block_str[64:128]
+    left_subblock = int(left_subblock_str, 2)
+    right_subblock = int(right_subblock_str, 2)
+
+    # 8 раундов
+    k = 0
+    while (k != 8):
+        if k == 0:
+            round_calc = dfc_round_func(K8, right_subblock)
+        elif k == 1:
+            round_calc = dfc_round_func(K7, right_subblock)
+        elif k == 2:
+            round_calc = dfc_round_func(K6, right_subblock)
+        elif k == 3:
+            round_calc = dfc_round_func(K5, right_subblock)
+        elif k == 4:
+            round_calc = dfc_round_func(K4, right_subblock)
+        elif k == 5:
+            round_calc = dfc_round_func(K3, right_subblock)
+        elif k == 6:
+            round_calc = dfc_round_func(K2, right_subblock)
+        elif k == 7:
+            round_calc = dfc_round_func(K1, right_subblock)
+        else:
+            print('bl')
         helper = right_subblock
         right_subblock = round_calc ^ left_subblock
         left_subblock = helper
@@ -141,6 +199,17 @@ def cipherer(sliced_message):
     return ciphered_message
 
 
+def decipherer(sliced_message):
+
+    ciphered_message = ''
+    i = 0
+    while (i != len(sliced_message)):
+        ciphered_message += struct_algo_dfc_dec(sliced_message[i])
+        i += 1
+
+    return ciphered_message
+
+
 # демонстрация
 # входной параметр: 128-битный ключ шифрования
 # выходной параметр: вывести результаты
@@ -153,9 +222,6 @@ def main_demo():
     print("KS:", KS)
     print("Random key 0-256b:", random_key)
     print("Key:", PK)
-    print("Key:", key)
-    print("len key:", key.bit_length())
-    print("OK:", OK.bit_length())
     print("Size:", len(source_message), '\n')
 
     sliced_message = slicer(source_message)
@@ -164,7 +230,7 @@ def main_demo():
     print("Size:", len(source_message), '\n')
 
     sliced_message = slicer(ciphered_message)
-    deciphered_message = cipherer(sliced_message)
+    deciphered_message = decipherer(sliced_message)
     print("Deciphered message:", deciphered_message)
     print("Size:", len(source_message), '\n')
 
@@ -233,13 +299,15 @@ E2 = (EA2 << 64) + EB2
 E3 = (EA3 << 64) + EB3
 E4 = (EA4 << 64) + EB4
 
-#Шифруем
-# Разбиваем на a и b
-a = (O1 >> 64) & 0xFFFFFFFF
-b = O1 & 0xFFFFFFFF
-
-# Считаем x
-
+# Ключи K1-K8
+K1 = (OK >> 384) & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+K2 = (EK >> 384) & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+K3 = (OK >> 256) & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+K4 = (EK >> 256) & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+K5 = (OK >> 128) & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+K6 = (EK >> 128) & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+K7 = OK & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+K8 = EK & 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 
 
 # вызываем
