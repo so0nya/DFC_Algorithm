@@ -6,19 +6,19 @@ import my_utils
 
 def test():
     # Проверка секретного ключа
-    print(my_utils.entropy(bytearray(to_bits(my_Feistel_network._SKEY, 64), "UTF-8")))
+    print(my_utils.entropy(bytearray(to_bits(my_Feistel_network._SKEY, 256), "UTF-8")))
     print('\n')
     # Проверка реализации циклического побитового сдвига для беззнаковых чисел
     a = np.uint16(5743)
-    print(to_bits(a, 16))
-    a = cyclic_shift(a, 16, -2)
-    print(to_bits(a, 16))
+    print(to_bits(a, 64))
+    a = cyclic_shift(a, 64, -2)
+    print(to_bits(a, 64))
     print('\n')
     # Проверка реализации uint_cast. В данном примере из 64 бит приводятся только биты с индексом 0...15
     b = np.uint64(2131221312122121)
+    print(to_bits(b, 256))
+    b = cast_np_uint(b, 256, np.uint16, 64)
     print(to_bits(b, 64))
-    b = cast_np_uint(b, 64, np.uint16, 16)
-    print(to_bits(b, 16))
 
 
 def task_ecb():
